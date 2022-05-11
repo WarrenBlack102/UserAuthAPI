@@ -48,7 +48,7 @@ def add_user():
 
     pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
         
-    new_record = User(username, pw_hash, email, password)
+    new_record = User(username, pw_hash, email)
     db.session.add(new_record)
     db.session.commit()
 
@@ -81,9 +81,47 @@ def get_users():
     return jsonify(multi_user_schema.dump(users))
 
 
+@app.route("/user/delete/<id>", methods=["DELETE"])
+def user_delete(id):
+    delete_user = db.session.query(User).filter(User.id == id).first()
+    db.session.delete(delete_user)
+    db.session.commit()
+    return jsonify("You are sooooooo Deleted")
 
 
+@app.route("/user/update/<id>", methods=["PUT"])
+def update_usermail(id):
+    if request.content_type != 'appilcation/json':
+        return jsonify("Data must be JSON!")
 
+    put_data = request.get_json()
+    username = put_data.get("username")
+    email = put_data.get("email")
+    
+    usermail_update = db.session.query(User).filter(User.id == id).first()
+
+    if username != None:
+        usermail_update.username = username
+    if email != None:
+        usermail_update.email = email
+
+    db.session.commit()
+    return jsonify(user_schema.dump(usermail_update))
+
+
+@app.route("/user/pw/<id>", methods=["PUT"])
+def pw_update(id):
+    if request.content_type != "application/json":
+        return jsonify("Error: Data must be JSON")
+
+    password = request.get_json().get("password")
+    user = db.session.query(User).filter(User.id == id).first()
+    pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+    user.password = pw_hash
+
+    db.session.commit()
+
+    return jsonify(user_schema.dump(user))
 
 
 
